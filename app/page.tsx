@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -11,6 +11,32 @@ import Textarea from "react-textarea-autosize";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "f") {
+        if (
+          e.target &&
+          ["INPUT", "TEXTAREA"].includes((e.target as any).nodeName)
+        ) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        if (inputRef?.current) {
+          inputRef.current.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [inputRef]);
+
   return (
     <main className="flex flex-col items-center justify-center">
       <form>
@@ -40,6 +66,7 @@ export default function Home() {
             <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
           <Textarea
+            ref={inputRef}
             tabIndex={0}
             placeholder="Send a message."
             className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
@@ -77,6 +104,10 @@ export default function Home() {
           </div>
         </div>
       </form>
+      <p className="text-xs leading-normal text-muted-foreground pt-2">
+        Focus input on
+        <span className="italic">"f"</span>
+      </p>
     </main>
   );
 }
