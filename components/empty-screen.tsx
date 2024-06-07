@@ -18,8 +18,8 @@ export default function EmptyScreen({
   submitMessage: (message: string) => void;
 }) {
   return (
-    <div className="mx-auto max-w-3xl px-4">
-      <div className="rounded-lg border bg-background p-8 mb-4">
+    <div className="mx-auto max-w-3xl">
+      <div className="rounded-lg border bg-background p-4 sm:p-8 mb-4">
         <h1 className="mb-2 text-lg font-semibold">Welcome!</h1>
         <p className="mb-2 leading-normal text-muted-foreground">
           This is a demo of an interactive financial assistant. It can show you

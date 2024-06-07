@@ -5,7 +5,7 @@ export default function BotMessage({
   className?: string;
 }) {
   return (
-    <div className="group relative flex items-start md:-ml-12">
+    <div className="group relative flex items-center">
       <div className="flex h-8 w-8 select-none items-center justify-center rounded-md border shadow-sm bg-primary text-primary-foreground">
         <svg
           fill="currentColor"
