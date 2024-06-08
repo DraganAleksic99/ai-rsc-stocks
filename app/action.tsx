@@ -3,7 +3,11 @@ import "server-only";
 import { createAI, getMutableAIState, streamUI } from "ai/rsc";
 import { openai } from "@ai-sdk/openai";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import BotMessage from "@/components/bot-message";
+import BotCard from "@/components/bot-card";
+import StocksSkeleton from "@/components/stocks-skeleton";
+import Stocks from "@/components/stocks";
 
 export interface ServerMessage {
   role: "user" | "assistant" | "system";
@@ -50,6 +54,9 @@ export async function continueConversation(
         Messages inside [] means that it's a UI element or a user event. For example:
         - "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
         - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
+
+        If you want to show trending stocks, call \`list_stocks\`.
+        If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
         
         Besides that, you can also chat with users and do some calculations if needed.`,
     temperature: 0.2,
@@ -65,6 +72,37 @@ export async function continueConversation(
         ]);
       }
       return <BotMessage>{content}</BotMessage>;
+    },
+    tools: {
+      list_stocks: {
+        description: "List three stocks from the fortune 500 companies",
+        parameters: z.object({
+          stocks: z.array(
+            z.object({
+              symbol: z.string().describe("The symbol of the stock"),
+              price: z.number().describe("The price of the stock"),
+              delta: z.number().describe("The change in price of the stock"),
+            })
+          ),
+        }),
+        generate: async function* ({ stocks }) {
+          const loadingUi = (
+            <BotCard>
+              <StocksSkeleton />
+            </BotCard>
+          );
+
+          yield loadingUi;
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          return (
+            <BotCard>
+              <Stocks stocks={stocks} />
+            </BotCard>
+          );
+        },
+      },
     },
   });
 
