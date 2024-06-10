@@ -1,10 +1,6 @@
-type Stock = {
-  symbol: string;
-  price: number;
-  delta: number;
-};
+import { type TStock } from "./stock";
 
-export default function Stocks({ stocks }: { stocks: Stock[] }) {
+export default function Stocks({ stocks }: { stocks: TStock[] }) {
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-evenly text-sm">
       {stocks.map(stock => (
