@@ -8,6 +8,8 @@ import BotMessage from "@/components/bot-message";
 import BotCard from "@/components/bot-card";
 import StocksSkeleton from "@/components/stocks-skeleton";
 import Stocks from "@/components/stocks";
+import StockSkeleton from "@/components/stock-skeleton";
+import Stock from "@/components/stock";
 
 export interface ServerMessage {
   role: "user" | "assistant" | "system";
@@ -56,6 +58,7 @@ export async function continueConversation(
         - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
 
         If you want to show trending stocks, call \`list_stocks\`.
+        If the user just wants the price, call \`show_stock_price\` to show the price.
         If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
         
         Besides that, you can also chat with users and do some calculations if needed.`,
@@ -103,6 +106,34 @@ export async function continueConversation(
           );
         },
       },
+      show_stock_price: {
+        description:
+          "Get the current price of a given stock. Use this to show the price to the user.",
+        parameters: z.object({
+          symbol: z
+            .string()
+            .describe("The symbol of the stock. e.g. TSLA/AAPL/GOOGL."),
+          price: z.number().describe("The price of the stock"),
+          delta: z.number().describe("The change in price of the stock"),
+        }),
+        generate: async function* ({ symbol, price, delta }) {
+          const loadingUi = (
+            <BotCard>
+              <StockSkeleton />
+            </BotCard>
+          );
+
+          yield loadingUi;
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          return (
+            <BotCard>
+              <Stock symbol={symbol} price={price} delta={delta} />
+            </BotCard>
+          );
+        },
+      },
     },
   });
 
@@ -125,7 +156,7 @@ const initialUIState: {
   display: React.ReactNode;
 }[] = [];
 
-export const AI = createAI<Array<ServerMessage>, Array<ClientMessage>>({
+export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
   },
