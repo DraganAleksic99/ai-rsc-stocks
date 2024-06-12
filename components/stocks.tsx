@@ -1,12 +1,25 @@
+"use client";
+
 import { type TStock } from "./stock";
+import { useUIState, useActions } from "ai/rsc";
+import { AI } from "@/app/action";
 
 export default function Stocks({ stocks }: { stocks: TStock[] }) {
+  const [, setMessages] = useUIState<typeof AI>();
+  const { continueConversation } = useActions();
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-evenly text-sm">
       {stocks.map(stock => (
         <button
           key={stock.symbol}
           className="flex-auto flex flex-row gap-2 p-2 text-left rounded-lg cursor-pointer bg-zinc-900 hover:bg-zinc-800"
+          onClick={async () => {
+            const response = await continueConversation(
+              `Preview the stock price of ${stock.symbol}. The price is ${stock.price} and delta is ${stock.delta}`
+            );
+            setMessages(currentMessages => [...currentMessages, response]);
+          }}
         >
           <div
             className={`text-xl ${
