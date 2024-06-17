@@ -10,6 +10,8 @@ import StocksSkeleton from "@/components/stocks-skeleton";
 import Stocks from "@/components/stocks";
 import StockSkeleton from "@/components/stock-skeleton";
 import Stock from "@/components/stock";
+import StockPurchaseSkeleton from "@/components/stock-purchase-skeleton";
+import StockPurchase from "@/components/stock-purchase";
 
 export interface ServerMessage {
   role: "user" | "assistant" | "system";
@@ -59,6 +61,7 @@ export async function continueConversation(
 
         If you want to show trending stocks, call \`list_stocks\`.
         If the user just wants the price, call \`show_stock_price\` to show the price.
+        If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
         If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
         
         Besides that, you can also chat with users and do some calculations if needed.`,
@@ -130,6 +133,43 @@ export async function continueConversation(
           return (
             <BotCard>
               <Stock symbol={symbol} price={price} delta={delta} />
+            </BotCard>
+          );
+        },
+      },
+      show_stock_purchase_ui: {
+        description:
+          "Show price and the UI to purchase a stock. Use this if the user wants to purchase a stock.",
+        parameters: z.object({
+          symbol: z
+            .string()
+            .describe("The symbol of the stock. e.g. TSLA/AAPL/GOOGL."),
+          price: z.number().describe("The price of the stock"),
+          numberOfShares: z
+            .number()
+            .optional()
+            .describe(
+              "The **number of shares** for a stock to purchase. Can be optional if the user did not specify it."
+            ),
+        }),
+        generate: async function* ({ symbol, price, numberOfShares }) {
+          const loadingUi = (
+            <BotCard>
+              <StockPurchaseSkeleton />
+            </BotCard>
+          );
+
+          yield loadingUi;
+
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          return (
+            <BotCard>
+              <StockPurchase
+                symbol={symbol}
+                price={price}
+                numberOfShares={numberOfShares}
+              />
             </BotCard>
           );
         },
