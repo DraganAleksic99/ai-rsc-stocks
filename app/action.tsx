@@ -1,9 +1,15 @@
 import "server-only";
 
-import { createAI, getMutableAIState, streamUI } from "ai/rsc";
+import {
+  createAI,
+  getMutableAIState,
+  streamUI,
+  createStreamableUI,
+} from "ai/rsc";
 import { openai } from "@ai-sdk/openai";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { formatNumber } from "@/lib/utils";
 import BotMessage from "@/components/bot-message";
 import BotCard from "@/components/bot-card";
 import StocksSkeleton from "@/components/stocks-skeleton";
@@ -24,6 +30,73 @@ export interface ClientMessage {
   display: React.ReactNode;
 }
 
+export async function confirmPurchase(
+  symbol: string,
+  price: number,
+  numberOfShares: number
+) {
+  "use server";
+
+  const aiState = getMutableAIState<typeof AI>();
+
+  const purchasing = createStreamableUI(
+    <div>
+      <p className="mb-2">
+        Purchasing {numberOfShares} ${symbol}...
+      </p>
+    </div>
+  );
+
+  const systemMessage = createStreamableUI(null);
+
+  (async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    purchasing.update(
+      <div>
+        <p className="mb-2">
+          Purchasing {numberOfShares} ${symbol}... just a moment...
+        </p>
+      </div>
+    );
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    purchasing.done(
+      <div>
+        <p className="mb-2">
+          You have successfully purchased {numberOfShares} ${symbol}. Total
+          cost: {formatNumber(numberOfShares * price)}
+        </p>
+      </div>
+    );
+
+    systemMessage.done(
+      <BotMessage>
+        You have purchased {numberOfShares} shares of {symbol} at ${price}.
+        Total cost = {formatNumber(numberOfShares * price)}.
+      </BotMessage>
+    );
+
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "system",
+        content: `[User has purchased ${numberOfShares} shares of ${symbol} at ${price}. Total cost = ${
+          numberOfShares * price
+        }]`,
+      },
+    ]);
+  })();
+
+  return {
+    purchasingUI: purchasing.value,
+    newMessage: {
+      id: Date.now(),
+      display: systemMessage.value,
+    },
+  };
+}
 export async function continueConversation(
   input: string
 ): Promise<ClientMessage> {
@@ -199,6 +272,7 @@ const initialUIState: {
 export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
+    confirmPurchase,
   },
   initialAIState,
   initialUIState,
